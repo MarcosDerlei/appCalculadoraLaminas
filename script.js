@@ -6,9 +6,12 @@ const exportarBtn = document.getElementById('exportarBtn');
 const lerEtiquetaBtn = document.getElementById('lerEtiqueta');
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
+const capturarBtn = document.getElementById('capturarBtn');
 
 let totalFita = 0;
+let stream = null;
 
+// ✅ Adicionar peça manualmente
 form.addEventListener('submit', event => {
   event.preventDefault();
 
@@ -48,7 +51,7 @@ limparBtn.addEventListener('click', () => {
   totalSpan.textContent = '0';
 });
 
-// 📤 Exportar para CSV
+// 📤 Exportar CSV
 exportarBtn.addEventListener('click', () => {
   let csv = 'Tipo,Quantidade,Dimensões,Laminação,Espessura,Fita (m)\n';
 
@@ -68,41 +71,54 @@ exportarBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// 📷 Ler Etiqueta com OCR
+// 📷 Abertura da câmera traseira
 lerEtiquetaBtn.addEventListener('click', async () => {
-  video.style.display = 'block';
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  video.srcObject = stream;
+  try {
+    video.style.display = 'block';
+    capturarBtn.style.display = 'inline-block';
 
-  setTimeout(async () => {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    video.style.display = 'none';
-    stream.getTracks().forEach(track => track.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { exact: "environment" } }
+    });
 
-    const result = await Tesseract.recognize(canvas, 'eng');
-    const texto = result.data.text;
-    console.log('Texto detectado:', texto);
+    video.srcObject = stream;
+  } catch (err) {
+    alert('Erro ao acessar a câmera: ' + err.message);
+  }
+});
 
-    const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+// 📸 Captura manual da imagem + OCR
+capturarBtn.addEventListener('click', async () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
 
-    // 🧠 Extrair medidas
-    const regexMedidas = /\b(\d{2,4})\s*[xX×]\s*(\d{2,4})\s*[xX×]\s*(\d{1,2})\b/;
-    const matchMedidas = textoLimpo.match(regexMedidas);
-    if (matchMedidas) {
-      document.getElementById('comprimento').value = matchMedidas[1];
-      document.getElementById('largura').value = matchMedidas[2];
-      document.getElementById('espessura').value = matchMedidas[3];
-    }
+  // Esconde a câmera e botão
+  video.style.display = 'none';
+  capturarBtn.style.display = 'none';
+  if (stream) stream.getTracks().forEach(track => track.stop());
 
-    // 🧠 Extrair tipo da peça
-    const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
-    if (matchTipo) {
-      const tipoExtraido = matchTipo[1].split('\n')[0].trim();
-      document.getElementById('tipo').value = tipoExtraido;
-    }
+  const result = await Tesseract.recognize(canvas, 'eng');
+  const texto = result.data.text;
+  console.log('Texto detectado:', texto);
 
-    alert("Informações extraídas com sucesso!");
-  }, 3000);
+  const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+
+  // 🧠 Extrair medidas
+  const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
+  const matchMedidas = textoLimpo.match(regexMedidas);
+  if (matchMedidas) {
+    document.getElementById('comprimento').value = matchMedidas[1];
+    document.getElementById('largura').value = matchMedidas[2];
+    document.getElementById('espessura').value = matchMedidas[3];
+  }
+
+  // 🧠 Extrair tipo
+  const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
+  if (matchTipo) {
+    const tipoExtraido = matchTipo[1].split('\n')[0].trim();
+    document.getElementById('tipo').value = tipoExtraido;
+  }
+
+  alert("Informações extraídas com sucesso!");
 });

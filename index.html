@@ -49,6 +49,7 @@
 
     <!-- Botão e câmera -->
     <button id="lerEtiqueta">Ler Etiqueta</button>
+    <button id="capturarBtn" style="display:none; margin-left: 10px;">Capturar Foto</button>
     <video id="video" width="100%" autoplay style="display:none; margin-top: 10px;"></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
@@ -83,47 +84,59 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const lerEtiquetaBtn = document.getElementById('lerEtiqueta');
+        const capturarBtn = document.getElementById('capturarBtn');
+        let stream;
 
         lerEtiquetaBtn.addEventListener('click', async () => {
-            video.style.display = 'block';
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
+            try {
+                video.style.display = 'block';
+                capturarBtn.style.display = 'inline-block';
 
-            setTimeout(async () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                video.style.display = 'none';
-                stream.getTracks().forEach(track => track.stop());
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "environment" } }
+                });
 
-                const result = await Tesseract.recognize(canvas, 'eng');
-                const texto = result.data.text;
-                console.log('Texto detectado:', texto);
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Erro ao acessar a câmera: ' + err.message);
+            }
+        });
 
-                const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+        capturarBtn.addEventListener('click', async () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
 
-                // Extrair medidas
-                const regex = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
-                const match = textoLimpo.match(regex);
-                if (match) {
-                    const comprimento = match[1];
-                    const largura = match[2];
-                    const espessura = match[3];
+            // Parar vídeo e ocultar
+            video.style.display = 'none';
+            capturarBtn.style.display = 'none';
+            stream.getTracks().forEach(track => track.stop());
 
-                    document.getElementById('comprimento').value = comprimento;
-                    document.getElementById('largura').value = largura;
-                    document.getElementById('espessura').value = espessura;
-                } else {
-                    alert('Não foi possível detectar as medidas.');
-                }
+            const result = await Tesseract.recognize(canvas, 'eng');
+            const texto = result.data.text;
+            console.log('Texto detectado:', texto);
 
-                // Extrair tipo da peça (ex: "Peça: Frente de gaveta")
-                const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
-                if (matchTipo) {
-                    const tipoExtraido = matchTipo[1].split('\n')[0].trim();
-                    document.getElementById('tipo').value = tipoExtraido;
-                }
-            }, 3000);
+            const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+
+            const regex = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
+            const match = textoLimpo.match(regex);
+            if (match) {
+                const comprimento = match[1];
+                const largura = match[2];
+                const espessura = match[3];
+
+                document.getElementById('comprimento').value = comprimento;
+                document.getElementById('largura').value = largura;
+                document.getElementById('espessura').value = espessura;
+            } else {
+                alert('Não foi possível detectar as medidas.');
+            }
+
+            const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
+            if (matchTipo) {
+                const tipoExtraido = matchTipo[1].split('\n')[0].trim();
+                document.getElementById('tipo').value = tipoExtraido;
+            }
         });
     </script>
 </body>
