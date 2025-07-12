@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <link rel="stylesheet" href="style.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle de Fita de Borda</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
     <h1>Calculadora de Fita de Borda</h1>
 
@@ -47,12 +45,17 @@
         <button type="submit">Adicionar Peça</button>
     </form>
 
-    <!-- Botão e câmera -->
-    <button id="lerEtiqueta">Ler Etiqueta</button>
-    <button id="capturarBtn" style="display:none; margin-left: 10px;">Capturar Foto</button>
+    <!-- Botões da câmera -->
+    <div style="margin-top: 10px;">
+        <button id="lerEtiqueta">Ler Etiqueta</button>
+        <button id="capturarBtn" style="display: none; margin-left: 10px;">Capturar Foto</button>
+    </div>
+
+    <!-- Vídeo e canvas da câmera -->
     <video id="video" width="100%" autoplay style="display:none; margin-top: 10px;"></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
+    <!-- Tabela de peças -->
     <table>
         <thead>
             <tr>
@@ -67,7 +70,10 @@
         <tbody id="tabelaComponentes"></tbody>
     </table>
 
+    <!-- Total -->
     <h3>Total de fita de borda: <span id="total">0</span> m</h3>
+
+    <!-- Botões de ações -->
     <div style="margin-top: 20px;">
         <button id="limparBtn">Limpar Tudo</button>
         <button id="exportarBtn">Exportar CSV</button>
@@ -78,67 +84,7 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const lerEtiquetaBtn = document.getElementById('lerEtiqueta');
-        const capturarBtn = document.getElementById('capturarBtn');
-        let stream;
-
-        lerEtiquetaBtn.addEventListener('click', async () => {
-            try {
-                video.style.display = 'block';
-                capturarBtn.style.display = 'inline-block';
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: "environment" } }
-                });
-
-                video.srcObject = stream;
-            } catch (err) {
-                alert('Erro ao acessar a câmera: ' + err.message);
-            }
-        });
-
-        capturarBtn.addEventListener('click', async () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-
-            // Parar vídeo e ocultar
-            video.style.display = 'none';
-            capturarBtn.style.display = 'none';
-            stream.getTracks().forEach(track => track.stop());
-
-            const result = await Tesseract.recognize(canvas, 'eng');
-            const texto = result.data.text;
-            console.log('Texto detectado:', texto);
-
-            const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
-
-            const regex = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
-            const match = textoLimpo.match(regex);
-            if (match) {
-                const comprimento = match[1];
-                const largura = match[2];
-                const espessura = match[3];
-
-                document.getElementById('comprimento').value = comprimento;
-                document.getElementById('largura').value = largura;
-                document.getElementById('espessura').value = espessura;
-            } else {
-                alert('Não foi possível detectar as medidas.');
-            }
-
-            const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
-            if (matchTipo) {
-                const tipoExtraido = matchTipo[1].split('\n')[0].trim();
-                document.getElementById('tipo').value = tipoExtraido;
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
-
 </html>
