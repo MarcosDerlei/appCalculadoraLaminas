@@ -6,7 +6,6 @@ const exportarBtn = document.getElementById('exportarBtn');
 const lerEtiquetaBtn = document.getElementById('lerEtiqueta');
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
-const capturarBtn = document.getElementById('capturarBtn');
 
 let totalFita = 0;
 let stream = null;
@@ -71,63 +70,63 @@ exportarBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// 📷 Abertura da câmera traseira (mais compatível)
+// 📷 Abertura da câmera e OCR automático após 2s
 lerEtiquetaBtn.addEventListener('click', async () => {
   try {
     video.style.display = 'block';
-    capturarBtn.style.display = 'inline-block';
 
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" } // mais seguro e compatível
+      video: { facingMode: "environment" }
     });
 
     video.srcObject = stream;
+
+    // Aguarda 2 segundos para capturar a imagem
+    setTimeout(async () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+
+      // Encerra o vídeo
+      video.style.display = 'none';
+      if (stream) stream.getTracks().forEach(track => track.stop());
+
+      // OCR com Tesseract.js
+      const result = await Tesseract.recognize(canvas, 'eng');
+      const texto = result.data.text;
+      console.log('Texto detectado:', texto);
+
+      const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+
+      // 🧠 Extrair medidas
+      const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
+      const matchMedidas = textoLimpo.match(regexMedidas);
+      if (matchMedidas) {
+        document.getElementById('comprimento').value = matchMedidas[1];
+        document.getElementById('largura').value = matchMedidas[2];
+        document.getElementById('espessura').value = matchMedidas[3];
+      } else {
+        alert("Medidas não detectadas.");
+      }
+
+      // 🧠 Extrair tipo
+      const matchTipo = texto.match(/pe[çc]a[:\-]?\s*(.+)/i);
+      if (matchTipo) {
+        let tipoExtraido = matchTipo[1].split('\n')[0].trim();
+        tipoExtraido = tipoExtraido.replace(/[^\w\s]/g, '');
+        if (tipoExtraido.toLowerCase().includes("pain")) {
+          tipoExtraido = "Painel";
+        }
+        document.getElementById('tipo').value = tipoExtraido;
+      } else {
+        alert("Tipo da peça não identificado.");
+      }
+
+    }, 4000); // Tempo para estabilizar a câmera antes de capturar
+
   } catch (err) {
     alert('Erro ao acessar a câmera: ' + err.message);
-  }
-});
-
-// 📸 Captura manual da imagem + OCR
-capturarBtn.addEventListener('click', async () => {
-  try {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-
-    // Esconde a câmera e botão
     video.style.display = 'none';
-    capturarBtn.style.display = 'none';
-    if (stream) stream.getTracks().forEach(track => track.stop());
-
-    const result = await Tesseract.recognize(canvas, 'eng');
-    const texto = result.data.text;
-    console.log('Texto detectado:', texto);
-
-    const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
-
-    // 🧠 Extrair medidas
-    const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
-    const matchMedidas = textoLimpo.match(regexMedidas);
-    if (matchMedidas) {
-      document.getElementById('comprimento').value = matchMedidas[1];
-      document.getElementById('largura').value = matchMedidas[2];
-      document.getElementById('espessura').value = matchMedidas[3];
-    } else {
-      alert("Medidas não detectadas.");
-    }
-
-    // 🧠 Extrair tipo
-    const matchTipo = texto.match(/peça[:\-]?\s*(.+)/i);
-    if (matchTipo) {
-      const tipoExtraido = matchTipo[1].split('\n')[0].trim();
-      document.getElementById('tipo').value = tipoExtraido;
-    }
-
-    alert("Informações extraídas com sucesso!");
-  } catch (err) {
-    alert("Erro ao processar a imagem: " + err.message);
-    video.style.display = 'none';
-    capturarBtn.style.display = 'none';
     if (stream) stream.getTracks().forEach(track => track.stop());
   }
 });
