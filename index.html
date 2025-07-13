@@ -7,87 +7,91 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Calculadora de Fita de Borda</h1>
+  <div class="container">
 
-  <form id="formulario">
-    <label>Tipo da Peça:
-      <input type="text" id="tipo" required />
-    </label>
+    <h1>Calculadora de Fita de Borda</h1>
 
-    <label>Quantidade:
-      <input type="number" id="quantidade" required />
-    </label>
+    <form id="formulario">
+      <label>Tipo da Peça:
+        <input type="text" id="tipo" required />
+      </label>
 
-    <label>Comprimento (cm):
-      <input type="number" id="comprimento" required />
-    </label>
+      <label>Quantidade:
+        <input type="number" id="quantidade" required />
+      </label>
 
-    <label>Largura (cm):
-      <input type="number" id="largura" required />
-    </label>
+      <label>Comprimento (cm):
+        <input type="number" id="comprimento" required />
+      </label>
 
-    <label>Espessura da fita (mm):
-      <select id="espessura">
-        <option value="22">22 mm</option>
-        <option value="45">45 mm</option>
-        <option value="100">100 mm</option>
-      </select>
-    </label>
+      <label>Largura (cm):
+        <input type="number" id="largura" required />
+      </label>
 
-    <label>Quantidade de lados laminados COMPRIDOS:
-      <input type="number" id="ladosCompridos" value="0" min="0" />
-    </label>
+      <label>Espessura da fita (mm):
+        <select id="espessura">
+          <option value="22">22 mm</option>
+          <option value="45">45 mm</option>
+          <option value="100">100 mm</option>
+        </select>
+      </label>
 
-    <label>Quantidade de lados laminados CURTOS:
-      <input type="number" id="ladosCurtos" value="0" min="0" />
-    </label>
+      <label>Quantidade de lados laminados COMPRIDOS:
+        <input type="number" id="ladosCompridos" value="0" min="0" />
+      </label>
 
-    <button type="submit">Adicionar Peça</button>
-  </form>
+      <label>Quantidade de lados laminados CURTOS:
+        <input type="number" id="ladosCurtos" value="0" min="0" />
+      </label>
 
-  <!-- Botão para iniciar leitura -->
-  <div style="margin-top: 10px;">
-    <button id="lerEtiqueta">📸 Ler Etiqueta</button>
-  </div>
+      <button type="submit">Adicionar Peça</button>
+    </form>
 
-  <!-- Vídeo e canvas da câmera -->
-  <video
-    id="video"
-    autoplay
-    playsinline
-    muted
-    style="display:none; max-width: 400px; margin: 20px auto; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.2);"
-  ></video>
+    <!-- Botão para iniciar leitura -->
+    <div style="margin-top: 10px;">
+      <button id="lerEtiqueta">📸 Ler Etiqueta</button>
+    </div>
 
-  <canvas id="canvas" style="display:none;"></canvas>
+    <!-- Vídeo e canvas da câmera -->
+    <video
+      id="video"
+      autoplay
+      playsinline
+      muted
+      style="display:none; max-width: 400px; margin: 20px auto; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.2);"
+    ></video>
 
-  <!-- Tabela de peças -->
-  <table>
-    <thead>
-      <tr>
-        <th>Tipo</th>
-        <th>Qtd</th>
-        <th>Comp. x Larg.</th>
-        <th>Laminação</th>
-        <th>Espessura</th>
-        <th>Fita (m)</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaComponentes"></tbody>
-  </table>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-  <!-- Total -->
-  <h3>Total de fita de borda: <span id="total">0</span> m</h3>
+    <!-- Tabela de peças -->
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Qtd</th>
+          <th>Comp. x Larg.</th>
+          <th>Laminação</th>
+          <th>Espessura</th>
+          <th>Fita (m)</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaComponentes"></tbody>
+    </table>
 
-  <!-- Botões de ações -->
-  <div style="margin-top: 20px;">
-    <button id="limparBtn">Limpar Tudo</button>
-    <button id="exportarBtn">Exportar CSV</button>
-  </div>
+    <!-- Total -->
+    <h3>Total de fita de borda: <span id="total">0</span> m</h3>
 
-  <footer style="text-align: center; margin-top: 30px;">
-    apreciatta móveis
-  </footer>
+    <!-- Botões de ações -->
+    <div style="margin-top: 20px;">
+      <button id="limparBtn">Limpar Tudo</button>
+      <button id="exportarBtn">Exportar CSV</button>
+    </div>
+
+    <footer style="text-align: center; margin-top: 30px;">
+      apreciatta móveis
+    </footer>
+
+  </div> <!-- fechamento do container -->
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
