@@ -16,8 +16,11 @@ form.addEventListener('submit', event => {
 
   const tipo = document.getElementById('tipo').value.trim();
   const quantidade = parseInt(document.getElementById('quantidade').value, 10);
-  const comprimento = parseFloat(document.getElementById('comprimento').value);
-  const largura = parseFloat(document.getElementById('largura').value);
+  const comprimentoBruto = parseFloat(document.getElementById('comprimento').value);
+  const larguraBruto = parseFloat(document.getElementById('largura').value);
+  const comprimento = comprimentoBruto >= 300 ? comprimentoBruto / 10 : comprimentoBruto;
+  const largura = larguraBruto >= 300 ? larguraBruto / 10 : larguraBruto;
+
   const ladosCompridos = parseInt(document.getElementById('ladosCompridos').value, 10);
   const ladosCurtos = parseInt(document.getElementById('ladosCurtos').value, 10);
   const espessura = document.getElementById('espessura').value;
@@ -102,13 +105,23 @@ lerEtiquetaBtn.addEventListener('click', async () => {
         // 🧠 Extrair medidas
         const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
         const matchMedidas = textoLimpo.match(regexMedidas);
+
         if (matchMedidas) {
-          document.getElementById('comprimento').value = matchMedidas[1];
-          document.getElementById('largura').value = matchMedidas[2];
-          document.getElementById('espessura').value = matchMedidas[3];
+          let comprimento = parseFloat(matchMedidas[1]);
+          let largura = parseFloat(matchMedidas[2]);
+          const espessura = parseFloat(matchMedidas[3]);
+
+          // 🛠️ Corrigir erro comum de OCR (ex: 960 lido como 960 cm = 9.60 m, mas é 96.0 cm)
+          if (largura > 300 && espessura <= 22) largura = largura / 10;
+          if (comprimento > 1000 && espessura <= 22) comprimento = comprimento / 10;
+
+          document.getElementById('comprimento').value = comprimento;
+          document.getElementById('largura').value = largura;
+          document.getElementById('espessura').value = espessura;
         } else {
           alert("Medidas não detectadas.");
         }
+
 
         // 🧠 Extrair tipo
         const matchTipo = texto.match(/pe[çc]a[:\-]?\s*(.+)/i);
