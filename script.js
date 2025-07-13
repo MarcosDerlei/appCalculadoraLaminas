@@ -70,7 +70,7 @@ exportarBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// 📷 Abertura da câmera e OCR automático após 2s
+// 📷 Abertura da câmera e OCR automático após 4s
 lerEtiquetaBtn.addEventListener('click', async () => {
   try {
     video.style.display = 'block';
@@ -81,45 +81,53 @@ lerEtiquetaBtn.addEventListener('click', async () => {
 
     video.srcObject = stream;
 
-    // Aguarda 2 segundos para capturar a imagem
+    // Aguarda 4 segundos para capturar a imagem
     setTimeout(async () => {
+      document.body.style.cursor = 'wait';
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0);
 
-      // Encerra o vídeo
       video.style.display = 'none';
       if (stream) stream.getTracks().forEach(track => track.stop());
 
-      // OCR com Tesseract.js
-      const result = await Tesseract.recognize(canvas, 'eng');
-      const texto = result.data.text;
-      console.log('Texto detectado:', texto);
+      try {
+        const result = await Tesseract.recognize(canvas, 'eng');
+        const texto = result.data.text;
+        console.log('Texto detectado:', texto);
 
-      const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
+        const textoLimpo = texto.replace(/[×xX]/g, 'x').replace(/\s+/g, ' ');
 
-      // 🧠 Extrair medidas
-      const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
-      const matchMedidas = textoLimpo.match(regexMedidas);
-      if (matchMedidas) {
-        document.getElementById('comprimento').value = matchMedidas[1];
-        document.getElementById('largura').value = matchMedidas[2];
-        document.getElementById('espessura').value = matchMedidas[3];
-      } else {
-        alert("Medidas não detectadas.");
-      }
-
-      // 🧠 Extrair tipo
-      const matchTipo = texto.match(/pe[çc]a[:\-]?\s*(.+)/i);
-      if (matchTipo) {
-        let tipoExtraido = matchTipo[1].split('\n')[0].trim();
-        tipoExtraido = tipoExtraido.replace(/[^\w\s]/g, '');
-        if (tipoExtraido.toLowerCase().includes("pain")) {
-          tipoExtraido = "Painel";
+        // 🧠 Extrair medidas
+        const regexMedidas = /\b(\d{2,4})\s*x\s*(\d{2,4})\s*x\s*(\d{1,2})\b/;
+        const matchMedidas = textoLimpo.match(regexMedidas);
+        if (matchMedidas) {
+          document.getElementById('comprimento').value = matchMedidas[1];
+          document.getElementById('largura').value = matchMedidas[2];
+          document.getElementById('espessura').value = matchMedidas[3];
+        } else {
+          alert("Medidas não detectadas.");
         }
-        document.getElementById('tipo').value = tipoExtraido;
-      } else {
-        alert("Tipo da peça não identificado.");
+
+        // 🧠 Extrair tipo
+        const matchTipo = texto.match(/pe[çc]a[:\-]?\s*(.+)/i);
+        if (matchTipo) {
+          let tipoExtraido = matchTipo[1].split('\n')[0].trim();
+          tipoExtraido = tipoExtraido.replace(/[^\w\s]/g, '');
+          if (tipoExtraido.toLowerCase().includes("pain")) {
+            tipoExtraido = "Painel";
+          }
+          document.getElementById('tipo').value = tipoExtraido;
+        } else {
+          alert("Tipo da peça não identificado.");
+        }
+
+      } catch (ocrError) {
+        alert("Erro ao processar a imagem: " + ocrError.message);
+      } finally {
+        // 🔁 Sempre restaura o cursor
+        document.body.style.cursor = 'default';
       }
 
     }, 4000); // Tempo para estabilizar a câmera antes de capturar
@@ -127,6 +135,7 @@ lerEtiquetaBtn.addEventListener('click', async () => {
   } catch (err) {
     alert('Erro ao acessar a câmera: ' + err.message);
     video.style.display = 'none';
+    document.body.style.cursor = 'default';
     if (stream) stream.getTracks().forEach(track => track.stop());
   }
 });
